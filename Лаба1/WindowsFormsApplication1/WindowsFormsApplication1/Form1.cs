@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Threading;
+using System.Diagnostics;
 
 namespace WindowsFormsApplication1
 {
@@ -33,7 +34,7 @@ namespace WindowsFormsApplication1
                 Ip = IPAddress.Parse(connect_info[0]);
                 port = int.Parse(connect_info[1]);
                 label4.ForeColor = Color.Green;
-                label4.Text = "настройки: \n IP сурвера: " + connect_info[0] + "\n Порт сервера: " + connect_info[1];
+                label4.Text = "Настройки: \nIP сурвера: " + connect_info[0] + "\nПорт сервера: " + connect_info[1];
             }
             catch (Exception e)
             {
@@ -58,6 +59,7 @@ namespace WindowsFormsApplication1
             }
         }
 
+        bool bold = false;
         void RecvMessage()
         {
             byte[] buffer = new byte[1024];
@@ -88,25 +90,20 @@ namespace WindowsFormsApplication1
                     }
                     this.Invoke((MethodInvoker)delegate()
                     {
+                        System.Media.SystemSounds.Asterisk.Play();
                         richTextBox1.AppendText(Clear_Message);
+                        richTextBox1.SelectionStart = richTextBox1.Text.LastIndexOf(Clear_Message);
+                        richTextBox1.SelectionLength = Clear_Message.Length;
+                        if (!bold) 
+                            richTextBox1.SelectionFont = new Font(richTextBox1.Font, FontStyle.Bold);
+                        else
+                            richTextBox1.SelectionFont = new Font(richTextBox1.Font, FontStyle.Regular);
+                        richTextBox1.SelectionLength = 0;
+                        richTextBox1.SelectionStart = richTextBox1.Text.Length;
                     });
                 }
                 catch (Exception e)
                 { }
-            }
-        }
-        private void button2_Click(object sender, EventArgs e)
-        {
-            if (textBox1.Text != " " && textBox1.Text != "")
-            {
-                Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                if (Ip != null)
-                {
-                    Client.Connect(Ip, port);
-                    th = new Thread(delegate() { RecvMessage(); });
-                    th.Start();
-                }
-
             }
         }
 
@@ -114,6 +111,28 @@ namespace WindowsFormsApplication1
         {
             SendMessage("\n" + textBox1.Text + ": " + richTextBox2.Text + ";;;5");
             richTextBox2.Clear();
+        }
+
+        private void connect_button_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Process.Start(Application.StartupPath + @"\ConsoleApplication1\Debug\ConsoleApplication1.exe");
+                if (textBox1.Text != " " && textBox1.Text != "")
+                {
+                    Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    if (Ip != null)
+                    {
+                        Client.Connect(Ip, port);
+                        th = new Thread(delegate() { RecvMessage(); });
+                        th.Start();
+                        richTextBox2.Focus();
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            { }
         }
     }
 }
