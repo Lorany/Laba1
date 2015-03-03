@@ -12,11 +12,20 @@ using System.Windows.Forms;
 using System.IO;
 using System.Threading;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace WindowsFormsApplication1
 {
     public partial class Form1 : Form
     {
+        //для FindWindow, чтобы найти хендл нужного окна
+        [DllImportAttribute("User32.dll")]
+        private static extern int FindWindow(String ClassName, String WindowName);
+
+        //SetForeground, чтоб активировать окно по хендлу
+        [DllImportAttribute("User32.dll")]
+        private static extern IntPtr SetForegroundWindow(int hWnd);
+
         static private Socket Client;
         private IPAddress Ip = null;
         private int port = 0;
@@ -87,10 +96,13 @@ namespace WindowsFormsApplication1
                         Clear_Message += message[i];
                     }
 
-                    for(int i = count + 4; i< message.Length)
-                    {
-                        textColor += message[i];
-                    }
+                    int countColor = Clear_Message.IndexOf(":::5");
+                    for (int i = countColor + 4; i < Clear_Message.Length; i++)
+                        textColor += Clear_Message[i];
+                    string Last_Message = "";
+                    for (int i = 0; i < countColor; i++)
+                        Last_Message += Clear_Message[i];
+
                     Color TextColor = new Color();
                     
                     if (textColor != "")
@@ -105,8 +117,8 @@ namespace WindowsFormsApplication1
                     this.Invoke((MethodInvoker)delegate()
                     {
                         System.Media.SystemSounds.Asterisk.Play();
-                        richTextBox1.AppendText(Clear_Message);
-                        richTextBox1.SelectionStart = richTextBox1.Text.LastIndexOf(Clear_Message);
+                        richTextBox1.AppendText(Last_Message);
+                        richTextBox1.SelectionStart = richTextBox1.Text.LastIndexOf(Last_Message);
                         richTextBox1.SelectionLength = Clear_Message.Length;
                         richTextBox1.SelectionColor = TextColor;
                         if (!bold)
@@ -130,7 +142,7 @@ namespace WindowsFormsApplication1
 
         private void button1_Click(object sender, EventArgs e)
         {
-            SendMessage("\n" + nameBox.Text + ": " + messageBox.Text + ";;;5" + nameBox.ForeColor.ToString());
+            SendMessage("\n" + nameBox.Text + ": " + messageBox.Text + ":::5" + nameBox.ForeColor.Name + ";;;5");
             messageBox.Clear();
         }
 
@@ -138,7 +150,9 @@ namespace WindowsFormsApplication1
         {
             try
             {
-                Process.Start(Application.StartupPath + @"\ConsoleApplication1\Debug\ConsoleApplication1.exe");
+                {
+                    Process.Start(Application.StartupPath + @"\ConsoleApplication1\Debug\ConsoleApplication1.exe");
+                }
                 if (nameBox.Text != " " && nameBox.Text != "")
                 {
                     Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -164,6 +178,15 @@ namespace WindowsFormsApplication1
             }
             catch (Exception ex)
             {
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            Process[] procs = Process.GetProcesses();
+            foreach (Process p in procs)
+            {
+                richTextBox1.AppendText(p.MainWindowTitle);
             }
         }
     }
