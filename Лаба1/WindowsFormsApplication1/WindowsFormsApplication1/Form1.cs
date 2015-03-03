@@ -80,10 +80,24 @@ namespace WindowsFormsApplication1
                     }
                     string Clear_Message = "";
 
+                    string textColor = "";
+
                     for(int i = 0; i < count; i++)
                     {
                         Clear_Message += message[i];
                     }
+
+                    for(int i = count + 4; i< message.Length)
+                    {
+                        textColor += message[i];
+                    }
+                    Color TextColor = new Color();
+                    
+                    if (textColor != "")
+                        TextColor = Color.FromName(textColor);
+                    else
+                        TextColor = Color.Black;
+                    
                     for (int i = 0; i < buffer.Length; i++)
                     {
                         buffer[i] = 0;
@@ -94,10 +108,17 @@ namespace WindowsFormsApplication1
                         richTextBox1.AppendText(Clear_Message);
                         richTextBox1.SelectionStart = richTextBox1.Text.LastIndexOf(Clear_Message);
                         richTextBox1.SelectionLength = Clear_Message.Length;
-                        if (!bold) 
+                        richTextBox1.SelectionColor = TextColor;
+                        if (!bold)
+                        {
                             richTextBox1.SelectionFont = new Font(richTextBox1.Font, FontStyle.Bold);
+                            bold = true;
+                        }
                         else
+                        {
                             richTextBox1.SelectionFont = new Font(richTextBox1.Font, FontStyle.Regular);
+                            bold = false;
+                        }
                         richTextBox1.SelectionLength = 0;
                         richTextBox1.SelectionStart = richTextBox1.Text.Length;
                     });
@@ -109,8 +130,8 @@ namespace WindowsFormsApplication1
 
         private void button1_Click(object sender, EventArgs e)
         {
-            SendMessage("\n" + textBox1.Text + ": " + richTextBox2.Text + ";;;5");
-            richTextBox2.Clear();
+            SendMessage("\n" + nameBox.Text + ": " + messageBox.Text + ";;;5" + nameBox.ForeColor.ToString());
+            messageBox.Clear();
         }
 
         private void connect_button_Click(object sender, EventArgs e)
@@ -118,7 +139,7 @@ namespace WindowsFormsApplication1
             try
             {
                 Process.Start(Application.StartupPath + @"\ConsoleApplication1\Debug\ConsoleApplication1.exe");
-                if (textBox1.Text != " " && textBox1.Text != "")
+                if (nameBox.Text != " " && nameBox.Text != "")
                 {
                     Client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     if (Ip != null)
@@ -126,13 +147,24 @@ namespace WindowsFormsApplication1
                         Client.Connect(Ip, port);
                         th = new Thread(delegate() { RecvMessage(); });
                         th.Start();
-                        richTextBox2.Focus();
+                        messageBox.Focus();
                     }
+
+                    do
+                    {
+                        Random random = new Random();
+                        KnownColor[] names = (KnownColor[])Enum.GetValues(typeof(KnownColor));
+                        KnownColor randomColorName = names[random.Next(names.Length)];
+                        Color randomColor = Color.FromKnownColor(randomColorName);
+                        nameBox.ForeColor = randomColor;
+                    } while (nameBox.ForeColor == Color.White);
+
 
                 }
             }
             catch (Exception ex)
-            { }
+            {
+            }
         }
     }
 }
